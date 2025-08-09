@@ -14,6 +14,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 自作モジュールのインポート
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
 from async_categorical_prompt import (
     AsyncTensorProduct, AsyncNaturalTransformation,
     AsyncAdjointPair, AsyncContextMonad
@@ -192,9 +196,14 @@ async def main():
 if __name__ == "__main__":
     print("⚠️ 注意: このデモは実際のClaude APIを使用します。")
     print("API使用量に応じて課金が発生する可能性があります。")
-    confirm = input("続行しますか？ (y/N): ").strip().lower()
     
-    if confirm == 'y':
-        asyncio.run(main())
+    import sys
+    if sys.stdin.isatty():
+        confirm = input("続行しますか？ (y/N): ").strip().lower()
+        if confirm != 'y':
+            print("キャンセルしました。")
+            sys.exit(0)
     else:
-        print("キャンセルしました。")
+        print("非インタラクティブモード: 自動実行開始...")
+    
+    asyncio.run(main())

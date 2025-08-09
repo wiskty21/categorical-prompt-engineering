@@ -46,7 +46,11 @@ async def test_tensor_product_simple():
     print("\n⊗ テンソル積の簡易テスト...")
     
     try:
-        from async_categorical_prompt import AsyncClaudeClient, APIConfig
+        import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
+from async_categorical_prompt import AsyncClaudeClient, APIConfig
         
         config = APIConfig(max_concurrent_requests=2, retry_attempts=1)
         client = AsyncClaudeClient(CLAUDE_API_KEY, config)

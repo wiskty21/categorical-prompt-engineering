@@ -6,6 +6,10 @@ framework, showing how to compose prompts, use functors, and build complex
 prompt chains using category theory principles.
 """
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
 from categorical_prompt_engineering import (
     Category, CategoryObject, Morphism, Functor, 
     PromptTemplate, PromptChain, create_basic_prompt_category

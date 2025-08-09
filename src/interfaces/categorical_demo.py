@@ -23,13 +23,25 @@ import base64
 
 # 自作モジュールのインポート
 try:
-    from optimized_categorical_prompt import (
+    import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
+from optimized_categorical_prompt import (
         OptimizedTensorProduct, OptimizedClaudeClient, OptimizationConfig
     )
-    from async_categorical_prompt import (
+    import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
+from async_categorical_prompt import (
         AsyncNaturalTransformation, AsyncAdjointPair, AsyncContextMonad
     )
-    from robust_categorical_prompt import RobustConfig
+    import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
+from robust_categorical_prompt import RobustConfig
 except ImportError as e:
     st.error(f"必要なモジュールが見つかりません: {e}")
     st.stop()

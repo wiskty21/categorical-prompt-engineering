@@ -7,7 +7,13 @@
 
 import asyncio
 import time
+import sys
+import os
 from dotenv import load_dotenv
+
+# パス設定
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
 from async_categorical_prompt import (
     AsyncTensorProduct, AsyncNaturalTransformation,
     AsyncAdjointPair, AsyncContextMonad

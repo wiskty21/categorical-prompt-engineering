@@ -12,6 +12,10 @@
 従来の逐次処理との違いを明確に示します。
 """
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+
 from categorical_prompt_advanced import *
 import time
 
