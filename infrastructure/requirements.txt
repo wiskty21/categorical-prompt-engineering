@@ -26,6 +26,7 @@ unittest-xml-reporting>=3.2.0
 # Data handling
 pandas>=2.0.0
 numpy>=1.24.0
+plotly>=5.17.0
 
 # Optional: Jupyter support
 jupyter>=1.0.0
