@@ -1,0 +1,57 @@
+{
+  "description": "圏論的プロンプトエンジニアリング バッチ処理サンプル",
+  "metadata": {
+    "created": "2025-08-09",
+    "version": "1.0",
+    "author": "Categorical Prompt Engineering Team"
+  },
+  "tasks": [
+    {
+      "operation": "tensor",
+      "description": "AI技術の多角的分析",
+      "parameters": {
+        "input_text": "人工知能技術の教育分野での活用可能性について",
+        "perspectives": ["教育学", "技術", "倫理", "経済", "心理学"],
+        "use_cache": true,
+        "use_batch": true
+      }
+    },
+    {
+      "operation": "transform", 
+      "description": "技術文書の初心者向け変換",
+      "parameters": {
+        "source_domain": "技術文書",
+        "target_domain": "初心者向け教材",
+        "content": "機械学習は大量のデータからパターンを自動的に学習し、未知のデータに対して予測や分類を行う技術である。",
+        "transformation_rule": "専門用語を平易に、概念を具体例で説明"
+      }
+    },
+    {
+      "operation": "adjoint",
+      "description": "制約からの自由化と本質抽出",
+      "parameters": {
+        "input_text": "企業の環境対策は法規制の枠内で最小限のコストで実施する必要がある",
+        "cycle": true
+      }
+    },
+    {
+      "operation": "monad",
+      "description": "プロジェクト企画の段階的発展",
+      "parameters": {
+        "initial_context": "新しいAIサービスの企画を検討している",
+        "developments": [
+          "市場調査を実施してニーズを把握したい",
+          "技術的実現可能性を検証する必要がある", 
+          "ビジネスモデルを具体化していく",
+          "プロトタイプ開発計画を立てる"
+        ]
+      }
+    }
+  ],
+  "settings": {
+    "parallel_execution": false,
+    "stop_on_error": false,
+    "output_format": "json",
+    "save_intermediate_results": true
+  }
+}

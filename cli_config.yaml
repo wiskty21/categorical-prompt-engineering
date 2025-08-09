@@ -1,0 +1,53 @@
+# 圏論的プロンプトエンジニアリング CLI 設定ファイル
+
+# API設定
+api:
+  claude_model: "claude-3-haiku-20240307"
+  max_tokens: 1000
+  timeout: 30
+
+# 最適化設定
+optimization:
+  use_cache: true
+  use_batch: true
+  max_concurrent: 5
+  cache_ttl_seconds: 3600
+
+# 出力設定
+output:
+  format: "text"  # json, yaml, text
+  verbose: true
+  color: true
+
+# デフォルト観点設定
+perspectives:
+  default: ["技術", "ビジネス", "ユーザー", "セキュリティ"]
+  
+  # カテゴリ別の観点
+  analysis:
+    - "技術的観点"
+    - "経済的観点" 
+    - "社会的観点"
+    - "環境的観点"
+    - "法的観点"
+  
+  design:
+    - "ユーザビリティ"
+    - "アクセシビリティ"
+    - "パフォーマンス"
+    - "セキュリティ"
+    - "保守性"
+  
+  business:
+    - "戦略"
+    - "財務"
+    - "マーケティング"
+    - "運用"
+    - "リスク管理"
+
+# 変換ルールプリセット
+transformation_rules:
+  technical_to_beginner: "専門用語を平易に、概念を具体例で、段階的理解を促進"
+  business_to_technical: "ビジネス要求を技術仕様に、抽象概念を実装可能な形に変換"
+  academic_to_practical: "理論的内容を実践的応用に、研究成果を現場で使える形に変換"
+  formal_to_casual: "堅い表現をカジュアルに、親しみやすく分かりやすい表現に変換"

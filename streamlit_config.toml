@@ -1,0 +1,42 @@
+# Streamlit設定ファイル
+
+[global]
+# 開発モード無効化
+developmentMode = false
+
+# データフレーム最大行数
+maxUploadSize = 200
+
+# テーマ設定
+[theme]
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+
+[server]
+# サーバー設定
+port = 8501
+address = "0.0.0.0"
+baseUrlPath = ""
+enableCORS = false
+enableXsrfProtection = true
+
+# ファイル監視無効化
+runOnSave = false
+allowRunOnSave = false
+
+# ヘッダー・フッター設定
+headless = false
+
+[browser]
+# ブラウザ自動起動無効化
+gatherUsageStats = false
+serverAddress = "0.0.0.0"
+serverPort = 8501
+
+[logger]
+# ログレベル設定
+level = "info"
+messageFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

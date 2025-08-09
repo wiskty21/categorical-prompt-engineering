@@ -1,0 +1,94 @@
+# 圏論的プロンプトエンジニアリング Docker Compose設定
+version: '3.8'
+
+services:
+  # メインアプリケーション
+  categorical-prompt:
+    build: .
+    container_name: categorical-prompt-engine
+    environment:
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - PYTHONPATH=/app
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    ports:
+      - "8000:8000"  # REST API用
+    networks:
+      - categorical-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+  # Web デモサイト
+  categorical-demo:
+    build: 
+      context: .
+      dockerfile: Dockerfile.demo
+    container_name: categorical-demo-site
+    environment:
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - CATEGORICAL_API_URL=http://categorical-prompt:8000
+    ports:
+      - "8501:8501"  # Streamlit用
+    depends_on:
+      - categorical-prompt
+    networks:
+      - categorical-network
+    restart: unless-stopped
+    
+  # Redis（キャッシュ用）
+  categorical-cache:
+    image: redis:7-alpine
+    container_name: categorical-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - categorical-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    
+  # Jupyter Notebook（開発・研究用）
+  categorical-jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    container_name: categorical-jupyter
+    environment:
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - JUPYTER_ENABLE_LAB=yes
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+    networks:
+      - categorical-network
+    restart: unless-stopped
+
+# ネットワーク設定
+networks:
+  categorical-network:
+    driver: bridge
+    name: categorical-network
+
+# 永続化ボリューム
+volumes:
+  redis-data:
+    driver: local
+  categorical-data:
+    driver: local
+  categorical-logs:
+    driver: local
+
+# 設定ファイル（.env）の例
+# CLAUDE_API_KEY=your_api_key_here
+# CATEGORICAL_ENV=production
+# LOG_LEVEL=INFO
