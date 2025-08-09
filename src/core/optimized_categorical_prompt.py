@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 
-if not CLAUDE_API_KEY:
-    raise ValueError("CLAUDE_API_KEY が設定されていません。.envファイルを確認してください。")
+# API key validation is now deferred to runtime
+logger.info(f"Claude API Key loaded: {'Yes' if CLAUDE_API_KEY else 'No'}")
 
 
 @dataclass
@@ -278,9 +278,12 @@ class OptimizedClaudeClient:
     """最適化されたClaude APIクライアント"""
     
     def __init__(self, api_key: str, config: OptimizationConfig = OptimizationConfig()):
-        self.api_key = api_key
+        if not api_key or not api_key.strip():
+            raise ValueError("有効なClaude APIキーが必要です")
+        
+        self.api_key = api_key.strip()
         self.config = config
-        self.client = anthropic.AsyncAnthropic(api_key=api_key)
+        self.client = anthropic.AsyncAnthropic(api_key=self.api_key)
         
         # キャッシュシステム
         self.cache = LRUCache(
@@ -349,11 +352,13 @@ class OptimizedClaudeClient:
                 await self.rate_controller.wait_if_needed()
             
             try:
+                logger.info(f"📡 API呼び出し開始: model=claude-3-haiku-20240307, max_tokens={max_tokens}")
                 response = await self.client.messages.create(
                     model="claude-3-haiku-20240307",
                     max_tokens=max_tokens,
                     messages=[{"role": "user", "content": prompt}]
                 )
+                logger.info(f"✅ API呼び出し成功: レスポンス取得")
                 
                 result = response.content[0].text
                 
@@ -361,6 +366,7 @@ class OptimizedClaudeClient:
                 if self.rate_controller:
                     self.rate_controller.record_success()
                 
+                logger.info(f"📝 結果取得完了: 文字数={len(result)}")
                 return result
                 
             except Exception as e:
@@ -624,7 +630,12 @@ class OptimizedTensorProduct:
                  client: OptimizedClaudeClient = None):
         self.perspectives = perspectives
         self.integration_strategy = integration_strategy
-        self.client = client or OptimizedClaudeClient(CLAUDE_API_KEY)
+        if client is None:
+            if not CLAUDE_API_KEY:
+                raise ValueError("CLAUDE_API_KEY が設定されていないため、クライアントを作成できません")
+            self.client = OptimizedClaudeClient(CLAUDE_API_KEY)
+        else:
+            self.client = client
     
     async def apply(self, input_text: str, use_cache: bool = True, 
                    use_batch: bool = True) -> Dict[str, Any]:

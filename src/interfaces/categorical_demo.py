@@ -32,9 +32,16 @@ try:
         AsyncNaturalTransformation, AsyncAdjointPair, AsyncContextMonad
     )
     from robust_categorical_prompt import RobustConfig
+    from simple_categorical_prompt import SimpleCategoricalPrompt
+    IMPORTS_SUCCESS = True
 except ImportError as e:
-    st.error(f"必要なモジュールが見つかりません: {e}")
-    st.stop()
+    st.warning(f"高度なモジュールが見つかりません。シンプル版を使用します: {e}")
+    try:
+        from simple_categorical_prompt import SimpleCategoricalPrompt
+        IMPORTS_SUCCESS = True
+    except ImportError:
+        st.error("必要なモジュールが見つかりません")
+        st.stop()
 
 # ページ設定
 st.set_page_config(
@@ -126,12 +133,37 @@ class StreamlitCategoricalUI:
             st.error("🔑 Claude APIキーを入力してください")
             return None
         
+        # API key validation
+        api_key = st.session_state.api_key.strip()
+        if not api_key:
+            st.error("❌ 空のAPIキーは無効です")
+            return None
+            
+        if not api_key.startswith("sk-ant-api"):
+            st.error("❌ 無効なAPIキー形式です。sk-ant-apiで始まる必要があります")
+            return None
+        
+        if len(api_key) < 100:
+            st.error("❌ APIキーが短すぎます")
+            return None
+        
         if self.client is None:
             try:
+                # Test API key with simple call first
+                st.info("🔍 APIキーを検証中...")
+                test_client = anthropic.Anthropic(api_key=api_key)
+                test_response = test_client.messages.create(
+                    model="claude-3-haiku-20240307",
+                    max_tokens=10,
+                    messages=[{"role": "user", "content": "Hi"}]
+                )
+                st.success("✅ APIキー検証成功")
+                
                 config = OptimizationConfig()
-                self.client = OptimizedClaudeClient(st.session_state.api_key, config)
+                self.client = OptimizedClaudeClient(api_key, config)
             except Exception as e:
-                st.error(f"❌ クライアント初期化エラー: {e}")
+                st.error(f"❌ API認証エラー: {e}")
+                st.info("💡 ヒント: Claude Console (https://console.anthropic.com) でAPIキーを確認してください")
                 return None
         
         return self.client
@@ -169,15 +201,24 @@ class StreamlitCategoricalUI:
             # 設定オプション
             st.subheader("🎛️ オプション")
             
-            st.session_state.user_preferences['auto_cache'] = st.checkbox(
-                "自動キャッシュ",
-                value=st.session_state.user_preferences['auto_cache'],
-                help="結果をキャッシュして高速化"
+            # 実行モード選択
+            execution_mode = st.radio(
+                "実行モード",
+                ["シンプル版（推奨）", "高度版"],
+                help="シンプル版は安定動作、高度版は最適化機能付き"
             )
+            st.session_state.user_preferences['simple_mode'] = (execution_mode == "シンプル版（推奨）")
+            
+            if not st.session_state.user_preferences['simple_mode']:
+                st.session_state.user_preferences['auto_cache'] = st.checkbox(
+                    "自動キャッシュ",
+                    value=st.session_state.user_preferences.get('auto_cache', True),
+                    help="結果をキャッシュして高速化"
+                )
             
             st.session_state.user_preferences['detailed_output'] = st.checkbox(
                 "詳細出力", 
-                value=st.session_state.user_preferences['detailed_output'],
+                value=st.session_state.user_preferences.get('detailed_output', True),
                 help="詳細な分析結果と統計を表示"
             )
             
@@ -244,8 +285,31 @@ class StreamlitCategoricalUI:
                 st.warning("分析対象テキストを入力してください")
             elif not perspectives:
                 st.warning("観点を選択してください")
+            elif not st.session_state.api_key:
+                st.error("🔑 APIキーを入力してください")
             else:
-                asyncio.run(self.execute_tensor_product(input_text, perspectives))
+                # Streamlit用の新しいイベントループで実行
+                try:
+                    asyncio.run(self.execute_tensor_product(input_text, perspectives))
+                except RuntimeError as e:
+                    if "asyncio.run() cannot be called from a running event loop" in str(e):
+                        # 既存のループがある場合はタスクとして実行
+                        import concurrent.futures
+                        
+                        def run_in_thread():
+                            import asyncio
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            return loop.run_until_complete(self.execute_tensor_product(input_text, perspectives))
+                        
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(run_in_thread)
+                            try:
+                                future.result(timeout=120)  # 2分のタイムアウト
+                            except concurrent.futures.TimeoutError:
+                                st.error("❌ 処理がタイムアウトしました（2分）")
+                    else:
+                        st.error(f"❌ 実行エラー: {e}")
     
     async def execute_tensor_product(self, input_text: str, perspectives: List[str]):
         """テンソル積実行"""
@@ -260,17 +324,37 @@ class StreamlitCategoricalUI:
                 tensor = OptimizedTensorProduct(perspectives, client=client)
                 
                 start_time = time.time()
-                result = await tensor.apply(
-                    input_text,
-                    use_cache=st.session_state.user_preferences['auto_cache'],
-                    use_batch=True
-                )
                 
-                # 結果表示
-                self.display_tensor_result(result, input_text, perspectives)
-                
-                # 履歴に追加
-                self.add_to_history("tensor", input_text, result, start_time)
+                # タイムアウト付き実行（120秒）
+                try:
+                    with st.container():
+                        progress_bar = st.progress(0)
+                        status_text = st.empty()
+                        
+                    status_text.text("🔍 テンソル積を開始...")
+                    progress_bar.progress(10)
+                    
+                    result = await asyncio.wait_for(
+                        tensor.apply(
+                            input_text,
+                            use_cache=st.session_state.user_preferences['auto_cache'],
+                            use_batch=False  # バッチ処理を無効化してテスト
+                        ),
+                        timeout=120.0
+                    )
+                    
+                    progress_bar.progress(100)
+                    status_text.text("✅ テンソル積完了！")
+                    
+                    # 結果表示
+                    self.display_tensor_result(result, input_text, perspectives)
+                    
+                    # 履歴に追加
+                    self.add_to_history("tensor", input_text, result, start_time)
+                    
+                except asyncio.TimeoutError:
+                    st.error("❌ 実行がタイムアウトしました（120秒）。APIキーやネットワーク接続を確認してください。")
+                    st.info("💡 ヒント: APIキーが正しく設定されているか、インターネット接続が正常かご確認ください。")
                 
         except Exception as e:
             st.error(f"❌ エラーが発生しました: {e}")

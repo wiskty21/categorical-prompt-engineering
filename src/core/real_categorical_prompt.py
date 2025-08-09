@@ -22,8 +22,8 @@ from dotenv import load_dotenv
 load_dotenv()
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 
-if not CLAUDE_API_KEY:
-    raise ValueError("CLAUDE_API_KEY が設定されていません。.envファイルを確認してください。")
+# API key validation deferred to runtime
+print(f"Claude API Key loaded: {'Yes' if CLAUDE_API_KEY else 'No'}")
 
 
 class ClaudeClient:
