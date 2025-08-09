@@ -151,6 +151,7 @@ class StreamlitCategoricalUI:
             try:
                 # Test API key with simple call first
                 st.info("🔍 APIキーを検証中...")
+                import anthropic
                 test_client = anthropic.Anthropic(api_key=api_key)
                 test_response = test_client.messages.create(
                     model="claude-3-haiku-20240307",
